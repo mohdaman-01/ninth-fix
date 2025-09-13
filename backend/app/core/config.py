@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Certificate Verification System"
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
     VERSION: str = "1.0.0"
+    BASE_URL: str = os.getenv("BASE_URL", "https://web-production-935e9.up.railway.app")
     
     # Security settings
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
