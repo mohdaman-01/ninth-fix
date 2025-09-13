@@ -1,0 +1,18 @@
+[phases.setup]
+nixPkgs = ["python311", "python311Packages.pip", "python311Packages.virtualenv", "tesseract4", "postgresql", "gcc", "libpq"]
+
+[phases.install]
+cmds = [
+  "python -m venv /opt/venv",
+  "/opt/venv/bin/pip install --upgrade pip setuptools wheel",
+  "/opt/venv/bin/pip install -r requirements.txt"
+]
+
+[start]
+cmd = "/opt/venv/bin/python app.py"
+
+[variables]
+PYTHONPATH = "/app/backend"
+PYTHONUNBUFFERED = "1"
+DEBUG = "false"
+TESSERACT_CMD = "/nix/store/*/bin/tesseract"

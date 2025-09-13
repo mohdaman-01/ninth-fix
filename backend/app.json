@@ -1,0 +1,71 @@
+{
+  "name": "Certificate Verification System",
+  "description": "Smart, scalable, and secure certificate verification system with FastAPI",
+  "repository": "https://github.com/YOUR_USERNAME/certificate-verification-system",
+  "logo": "https://fastapi.tiangolo.com/img/logo-margin/logo-teal.png",
+  "keywords": [
+    "fastapi",
+    "python",
+    "certificate",
+    "verification",
+    "ocr",
+    "ai",
+    "postgresql"
+  ],
+  "success_url": "/docs",
+  "scripts": {
+    "dokku": {
+      "predeploy": "python init_db.py"
+    }
+  },
+  "env": {
+    "SECRET_KEY": {
+      "description": "Secret key for JWT tokens",
+      "generator": "secret"
+    },
+    "DATABASE_URL": {
+      "description": "PostgreSQL database URL",
+      "required": true
+    },
+    "GOOGLE_CLIENT_ID": {
+      "description": "Google OAuth Client ID",
+      "required": false
+    },
+    "GOOGLE_CLIENT_SECRET": {
+      "description": "Google OAuth Client Secret",
+      "required": false
+    },
+    "DEBUG": {
+      "description": "Debug mode",
+      "value": "False"
+    },
+    "ALLOWED_ORIGINS": {
+      "description": "Comma-separated list of allowed origins",
+      "value": "https://nova-s-25029.netlify.app,http://localhost:3000"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:mini",
+      "as": "DATABASE"
+    },
+    {
+      "plan": "heroku-redis:mini",
+      "as": "REDIS"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-apt"
+    },
+    {
+      "url": "heroku/python"
+    }
+  ]
+}
