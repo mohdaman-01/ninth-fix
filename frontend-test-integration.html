@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend-Backend Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; color: #856404; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 3px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+        .status-indicator { padding: 5px 10px; border-radius: 3px; font-size: 14px; margin: 10px 0; display: inline-block; }
+    </style>
+</head>
+<body>
+    <h1>🔗 Frontend-Backend Integration Test</h1>
+    <p><strong>Frontend:</strong> https://nova-s-25029.netlify.app</p>
+    <p><strong>Backend:</strong> https://web-production-935e9.up.railway.app</p>
+    
+    <div id="backend-status" class="status-indicator warning">Checking backend...</div>
+
+    <div class="test-section">
+        <h3>1. Backend Health Check</h3>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="healthResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. CORS Test</h3>
+        <button onclick="testCORS()">Test CORS Policy</button>
+        <div id="corsResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. File Upload Test</h3>
+        <input type="file" id="fileInput" accept="image/*,.pdf">
+        <button onclick="testUpload()">Test Upload</button>
+        <div id="uploadResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. OCR Test</h3>
+        <input type="file" id="ocrFileInput" accept="image/*">
+        <button onclick="testOCR()">Test OCR</button>
+        <div id="ocrResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>5. Authentication Test</h3>
+        <button onclick="testAuth()">Test Google Auth</button>
+        <div id="authResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>6. API Documentation</h3>
+        <button onclick="openAPIDocs()">Open API Docs</button>
+        <p>Opens the interactive API documentation in a new tab.</p>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://web-production-935e9.up.railway.app';
+
+        // Auto-test on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            testHealth();
+        });
+
+        async function testHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            const statusDiv = document.getElementById('backend-status');
+            
+            try {
+                resultDiv.innerHTML = '<p>Testing backend health...</p>';
+                statusDiv.textContent = 'Checking backend...';
+                statusDiv.className = 'status-indicator warning';
+                
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                
+                if (data.status === 'healthy' || data.status === 'error') {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Backend is Running!</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                    statusDiv.textContent = `Backend: ${data.status}`;
+                    statusDiv.className = data.status === 'healthy' ? 'status-indicator success' : 'status-indicator warning';
+                } else {
+                    throw new Error('Unexpected response');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Backend Connection Failed</h4>
+                        <p>Error: ${error.message}</p>
+                        <p>Make sure your backend is deployed and running on Railway.</p>
+                    </div>
+                `;
+                statusDiv.textContent = 'Backend: Offline';
+                statusDiv.className = 'status-indicator error';
+            }
+        }
+
+        async function testCORS() {
+            const resultDiv = document.getElementById('corsResult');
+            
+            try {
+                resultDiv.innerHTML = '<p>Testing CORS policy...</p>';
+                
+                const response = await fetch(`${API_BASE_URL}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Origin': 'https://nova-s-25029.netlify.app'
+                    }
+                });
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ CORS is Working!</h4>
+                        <p>Status: ${response.status}</p>
+                        <p>Your Netlify frontend can communicate with Railway backend.</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ CORS Error</h4>
+                        <p>Error: ${error.message}</p>
+                        <p>This might be a CORS policy issue. Check backend configuration.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testUpload() {
+            const resultDiv = document.getElementById('uploadResult');
+            const fileInput = document.getElementById('fileInput');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">Please select a file first!</div>';
+                return;
+            }
+
+            try {
+                resultDiv.innerHTML = '<p>Testing file upload...</p>';
+                
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                
+                const response = await fetch(`${API_BASE_URL}/api/v1/upload/certificate`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Upload Successful!</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="warning">
+                            <h4>⚠️ Upload Response</h4>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Upload Failed</h4>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testOCR() {
+            const resultDiv = document.getElementById('ocrResult');
+            const fileInput = document.getElementById('ocrFileInput');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">Please select an image file first!</div>';
+                return;
+            }
+
+            try {
+                resultDiv.innerHTML = '<p>Testing OCR extraction...</p>';
+                
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                
+                const response = await fetch(`${API_BASE_URL}/api/v1/ocr/extract-text`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ OCR Successful!</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="warning">
+                            <h4>⚠️ OCR Response</h4>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ OCR Failed</h4>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function testAuth() {
+            const resultDiv = document.getElementById('authResult');
+            
+            resultDiv.innerHTML = `
+                <div class="warning">
+                    <p>Redirecting to Google OAuth in 3 seconds...</p>
+                    <p>URL: <code>${API_BASE_URL}/api/v1/auth/google</code></p>
+                    <button onclick="cancelAuth()">Cancel</button>
+                </div>
+            `;
+            
+            window.authTimeout = setTimeout(() => {
+                window.location.href = `${API_BASE_URL}/api/v1/auth/google`;
+            }, 3000);
+        }
+
+        function cancelAuth() {
+            clearTimeout(window.authTimeout);
+            document.getElementById('authResult').innerHTML = '<p>Authentication test cancelled.</p>';
+        }
+
+        function openAPIDocs() {
+            window.open(`${API_BASE_URL}/docs`, '_blank');
+        }
+
+        // Example functions for your actual frontend
+        window.exampleFunctions = {
+            // Use these functions in your actual frontend code
+            uploadCertificate: async function(file) {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch(`${API_BASE_URL}/api/v1/upload/certificate`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                return response.json();
+            },
+
+            verifyCertificate: async function(certId) {
+                const response = await fetch(`${API_BASE_URL}/api/v1/verify/certificate/${certId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                return response.json();
+            },
+
+            extractText: async function(file) {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch(`${API_BASE_URL}/api/v1/ocr/extract-text`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                return response.json();
+            },
+
+            loginWithGoogle: function() {
+                window.location.href = `${API_BASE_URL}/api/v1/auth/google`;
+            }
+        };
+
+        console.log('Integration test loaded. Example functions available at window.exampleFunctions');
+    </script>
+</body>
+</html>
